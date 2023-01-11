@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -55,13 +56,16 @@ public enum Icons {
 	AUDIO,
 	LANGS,
 	CONTROLLER,
+	KEYBOARD,
 	STATS,
 	CHALLENGE_OFF,
 	CHALLENGE_ON,
 	RENAME_OFF,
 	RENAME_ON,
+	SEED,
 	LEFTARROW,
 	RIGHTARROW,
+	CALENDAR,
 
 	//misc icons, mainly used for buttons, spacing for 16x16 until the smaller icons at the end
 	UNCHECKED,
@@ -76,6 +80,8 @@ public enum Icons {
 	MAGNIFY,
 	BUFFS,
 	ENERGY,
+	COPY,
+	PASTE,
 	COIN_SML,
 	ENERGY_SML,
 	BACKPACK,
@@ -92,7 +98,7 @@ public enum Icons {
 	SLEEP,
 	ALERT,
 	LOST,
-	DEPTH,
+	DEPTH,      //depth icons have two variants, for regular and seeded runs
 	DEPTH_CHASM,
 	DEPTH_WATER,
 	DEPTH_GRASS,
@@ -177,7 +183,7 @@ public enum Icons {
 				icon.frame( icon.texture.uvRectBySize( 32, 32, 16, 12 ) );
 				break;
 			case DATA:
-				icon.frame( icon.texture.uvRectBySize( 48, 32, 16, 15 ) );
+				icon.frame( icon.texture.uvRectBySize( 48, 32, 14, 15 ) );
 				break;
 			case AUDIO:
 				icon.frame( icon.texture.uvRectBySize( 64, 32, 14, 14 ) );
@@ -188,26 +194,35 @@ public enum Icons {
 			case CONTROLLER:
 				icon.frame( icon.texture.uvRectBySize( 96, 32, 16, 12 ) );
 				break;
+			case KEYBOARD:
+				icon.frame( icon.texture.uvRectBySize( 112, 32, 15, 12 ) );
+				break;
 			case STATS:
-				icon.frame( icon.texture.uvRectBySize( 112, 32, 16, 13 ) );
+				icon.frame( icon.texture.uvRectBySize( 128, 32, 16, 13 ) );
 				break;
 			case CHALLENGE_OFF:
-				icon.frame( icon.texture.uvRectBySize( 128, 32, 14, 12 ) );
+				icon.frame( icon.texture.uvRectBySize( 144, 32, 15, 12 ) );
 				break;
 			case CHALLENGE_ON:
-				icon.frame( icon.texture.uvRectBySize( 144, 32, 14, 12 ) );
+				icon.frame( icon.texture.uvRectBySize( 160, 32, 15, 12 ) );
 				break;
 			case RENAME_OFF:
-				icon.frame( icon.texture.uvRectBySize( 160, 32, 15, 14 ) );
-				break;
-			case RENAME_ON:
 				icon.frame( icon.texture.uvRectBySize( 176, 32, 15, 14 ) );
 				break;
+			case RENAME_ON:
+				icon.frame( icon.texture.uvRectBySize( 192, 32, 15, 14 ) );
+				break;
+			case SEED:
+				icon.frame( icon.texture.uvRectBySize( 208, 32, 15, 10 ) );
+				break;
 			case LEFTARROW:
-				icon.frame( icon.texture.uvRectBySize( 192, 32, 14, 8 ) );
+				icon.frame( icon.texture.uvRectBySize( 224, 32, 14, 8 ) );
 				break;
 			case RIGHTARROW:
-				icon.frame( icon.texture.uvRectBySize( 208, 32, 14, 8 ) );
+				icon.frame( icon.texture.uvRectBySize( 240, 32, 14, 8 ) );
+				break;
+			case CALENDAR:
+				icon.frame( icon.texture.uvRectBySize( 240, 16, 15, 12 ) );
 				break;
 
 			case UNCHECKED:
@@ -246,26 +261,32 @@ public enum Icons {
 			case ENERGY:
 				icon.frame( icon.texture.uvRectBySize( 176, 48, 16, 16 ) );
 				break;
+			case COPY:
+				icon.frame( icon.texture.uvRectBySize( 192, 48, 13, 13 ) );
+				break;
+			case PASTE:
+				icon.frame( icon.texture.uvRectBySize( 208, 48, 13, 13 ) );
+				break;
 			case COIN_SML:
-				icon.frame( icon.texture.uvRectBySize( 192, 48, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 192, 64, 7, 7 ) );
 				break;
 			case ENERGY_SML:
-				icon.frame( icon.texture.uvRectBySize( 192, 56, 8, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 192, 72, 8, 7 ) );
 				break;
 			case BACKPACK:
-				icon.frame( icon.texture.uvRectBySize( 201, 48, 10, 10 ) );
+				icon.frame( icon.texture.uvRectBySize( 201, 64, 10, 10 ) );
 				break;
 			case SCROLL_HOLDER:
-				icon.frame( icon.texture.uvRectBySize( 211, 48, 10, 10 ) );
+				icon.frame( icon.texture.uvRectBySize( 211, 64, 10, 10 ) );
 				break;
 			case SEED_POUCH:
-				icon.frame( icon.texture.uvRectBySize( 221, 48, 10, 10 ) );
+				icon.frame( icon.texture.uvRectBySize( 221, 64, 10, 10 ) );
 				break;
 			case WAND_HOLSTER:
-				icon.frame( icon.texture.uvRectBySize( 231, 48, 10, 10 ) );
+				icon.frame( icon.texture.uvRectBySize( 231, 64, 10, 10 ) );
 				break;
 			case POTION_BANDOLIER:
-				icon.frame( icon.texture.uvRectBySize( 241, 48, 10, 10 ) );
+				icon.frame( icon.texture.uvRectBySize( 241, 64, 10, 10 ) );
 				break;
 
 			case TARGET:
@@ -290,31 +311,31 @@ public enum Icons {
 				icon.frame( icon.texture.uvRectBySize( 40, 72, 8, 8 ) );
 				break;
 			case DEPTH:
-				icon.frame( icon.texture.uvRectBySize( 48, 64, 6, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 48, 64 + runTypeOfs(), 6, 7 ) );
 				break;
 			case DEPTH_CHASM:
-				icon.frame( icon.texture.uvRectBySize( 56, 64, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 56, 64 + runTypeOfs(), 7, 7 ) );
 				break;
 			case DEPTH_WATER:
-				icon.frame( icon.texture.uvRectBySize( 64, 64, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 64, 64 + runTypeOfs(), 7, 7 ) );
 				break;
 			case DEPTH_GRASS:
-				icon.frame( icon.texture.uvRectBySize( 72, 64, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 72, 64 + runTypeOfs(), 7, 7 ) );
 				break;
 			case DEPTH_DARK:
-				icon.frame( icon.texture.uvRectBySize( 80, 64, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 80, 64 + runTypeOfs(), 7, 7 ) );
 				break;
 			case DEPTH_LARGE:
-				icon.frame( icon.texture.uvRectBySize( 88, 64, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 88, 64 + runTypeOfs(), 7, 7 ) );
 				break;
 			case DEPTH_TRAPS:
-				icon.frame( icon.texture.uvRectBySize( 96, 64, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 96, 64 + runTypeOfs(), 7, 7 ) );
 				break;
 			case DEPTH_SECRETS:
-				icon.frame( icon.texture.uvRectBySize( 104, 64, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 104, 64 + runTypeOfs(), 7, 7 ) );
 				break;
 			case CHAL_COUNT:
-				icon.frame( icon.texture.uvRectBySize( 48, 72, 7, 7 ) );
+				icon.frame( icon.texture.uvRectBySize( 112, 64, 7, 7 ) );
 				break;
 		
 			case LIBGDX:
@@ -351,6 +372,20 @@ public enum Icons {
 
 		}
 		return icon;
+	}
+
+	private static int runTypeOfs(){
+		if (Dungeon.daily){
+			if (Dungeon.dailyReplay){
+				return 24;
+			} else {
+				return 16;
+			}
+		} else if (!Dungeon.customSeedText.isEmpty()){
+			return 8;
+		} else {
+			return 0;
+		}
 	}
 	
 	public static Image get( HeroClass cl ) {

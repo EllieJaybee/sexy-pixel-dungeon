@@ -37,12 +37,12 @@ public class SoulMark extends FlavourBuff {
 
 	@Override
 	public int icon() {
-		return BuffIndicator.CORRUPT;
+		return BuffIndicator.INVERT_MARK;
 	}
 
 	@Override
 	public void tintIcon(Image icon) {
-		icon.hardlight(0.5f, 0.5f, 0.5f);
+		icon.hardlight(0.5f, 0.2f, 1f);
 	}
 
 	@Override
@@ -54,15 +54,5 @@ public class SoulMark extends FlavourBuff {
 	public void fx(boolean on) {
 		if (on) target.sprite.add(CharSprite.State.MARKED);
 		else target.sprite.remove(CharSprite.State.MARKED);
-	}
-
-	@Override
-	public String toString() {
-		return Messages.get(this, "name");
-	}
-
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc", dispTurns());
 	}
 }

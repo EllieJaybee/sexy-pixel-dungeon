@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
+import com.watabou.noosa.Image;
 
 public class Levitation extends FlavourBuff {
 	
@@ -64,6 +65,11 @@ public class Levitation extends FlavourBuff {
 	}
 
 	@Override
+	public void tintIcon(Image icon) {
+		icon.hardlight(1f, 2.1f, 2.5f);
+	}
+
+	@Override
 	public float iconFadePercent() {
 		return Math.max(0, (DURATION - visualcooldown()) / DURATION);
 	}
@@ -72,15 +78,5 @@ public class Levitation extends FlavourBuff {
 	public void fx(boolean on) {
 		if (on) target.sprite.add(CharSprite.State.LEVITATING);
 		else target.sprite.remove(CharSprite.State.LEVITATING);
-	}
-
-	@Override
-	public String toString() {
-		return Messages.get(this, "name");
-	}
-
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc", dispTurns());
 	}
 }

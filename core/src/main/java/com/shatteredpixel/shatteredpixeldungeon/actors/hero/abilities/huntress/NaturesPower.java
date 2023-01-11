@@ -70,6 +70,10 @@ public class NaturesPower extends ArmorAbility {
 
 	public static class naturesPowerTracker extends FlavourBuff{
 
+		{
+			type = buffType.POSITIVE;
+		}
+
 		public static final float DURATION = 8f;
 
 		public int extensionsLeft = 2;
@@ -83,22 +87,12 @@ public class NaturesPower extends ArmorAbility {
 
 		@Override
 		public int icon() {
-			return BuffIndicator.SHADOWS;
+			return BuffIndicator.NATURE_POWER;
 		}
 
 		@Override
 		public float iconFadePercent() {
 			return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-		}
-
-		@Override
-		public String toString() {
-			return Messages.get(this, "name");
-		}
-
-		@Override
-		public String desc() {
-			return Messages.get(this, "desc", dispTurns(visualcooldown()));
 		}
 
 	}

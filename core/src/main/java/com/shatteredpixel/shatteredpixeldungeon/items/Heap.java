@@ -74,6 +74,7 @@ public class Heap implements Bundlable {
 	public ItemSprite sprite;
 	public boolean seen = false;
 	public boolean haunted = false;
+	public boolean autoExplored = false; //used to determine if this heap should count for exploration bonus
 	
 	public LinkedList<Item> items = new LinkedList<>();
 	
@@ -347,15 +348,14 @@ public class Heap implements Bundlable {
 		items.clear();
 	}
 
-	@Override
-	public String toString(){
+	public String title(){
 		switch(type){
 			case FOR_SALE:
 				Item i = peek();
 				if (size() == 1) {
-					return Messages.get(this, "for_sale", Shopkeeper.sellPrice(i), i.toString());
+					return Messages.get(this, "for_sale", Shopkeeper.sellPrice(i), i.title());
 				} else {
-					return i.toString();
+					return i.title();
 				}
 			case CHEST:
 				return Messages.get(this, "chest");
@@ -370,7 +370,7 @@ public class Heap implements Bundlable {
 			case REMAINS:
 				return Messages.get(this, "remains");
 			default:
-				return peek().toString();
+				return peek().title();
 		}
 	}
 
@@ -403,6 +403,7 @@ public class Heap implements Bundlable {
 	private static final String TYPE	= "type";
 	private static final String ITEMS	= "items";
 	private static final String HAUNTED	= "haunted";
+	private static final String AUTO_EXPLORED	= "auto_explored";
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -427,16 +428,17 @@ public class Heap implements Bundlable {
 		}
 		
 		haunted = bundle.getBoolean( HAUNTED );
-		
+		autoExplored = bundle.getBoolean( AUTO_EXPLORED );
 	}
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		bundle.put( POS, pos );
 		bundle.put( SEEN, seen );
-		bundle.put( TYPE, type.toString() );
+		bundle.put( TYPE, type );
 		bundle.put( ITEMS, items );
 		bundle.put( HAUNTED, haunted );
+		bundle.put( AUTO_EXPLORED, autoExplored );
 	}
 	
 }

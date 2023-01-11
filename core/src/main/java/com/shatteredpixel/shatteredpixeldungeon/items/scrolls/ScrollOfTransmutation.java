@@ -90,6 +90,7 @@ public class ScrollOfTransmutation extends InventoryScroll {
 					item.cursed = false; //to allow it to be unequipped
 					((EquipableItem) item).doUnequip(Dungeon.hero, false);
 					((EquipableItem) result).doEquip(Dungeon.hero);
+					Dungeon.hero.spend(-Dungeon.hero.cooldown()); //cancel equip/unequip time
 				} else {
 					item.detach(Dungeon.hero.belongings.backpack);
 					if (!result.collect()) {
@@ -224,9 +225,12 @@ public class ScrollOfTransmutation extends InventoryScroll {
 	}
 	
 	private static Artifact changeArtifact( Artifact a ) {
-		Artifact n = Generator.randomArtifact();
+		Artifact n;
+		do {
+			n = Generator.randomArtifact();
+		} while ( n != null && (Challenges.isItemBlocked(n) || n.getClass() == a.getClass()));
 		
-		if (n != null && !Challenges.isItemBlocked(n)){
+		if (n != null){
 			n.cursedKnown = a.cursedKnown;
 			n.cursed = a.cursed;
 			n.levelKnown = a.levelKnown;
@@ -266,7 +270,7 @@ public class ScrollOfTransmutation extends InventoryScroll {
 		Plant.Seed n;
 		
 		do {
-			n = (Plant.Seed)Generator.random( Generator.Category.SEED );
+			n = (Plant.Seed)Generator.randomUsingDefaults( Generator.Category.SEED );
 		} while (n.getClass() == s.getClass());
 		
 		return n;
@@ -277,7 +281,7 @@ public class ScrollOfTransmutation extends InventoryScroll {
 		Runestone n;
 		
 		do {
-			n = (Runestone) Generator.random( Generator.Category.STONE );
+			n = (Runestone) Generator.randomUsingDefaults( Generator.Category.STONE );
 		} while (n.getClass() == r.getClass());
 		
 		return n;

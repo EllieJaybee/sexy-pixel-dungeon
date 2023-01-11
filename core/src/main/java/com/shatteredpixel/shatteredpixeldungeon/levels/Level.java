@@ -48,6 +48,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.SpiritHawk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Piranha;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Sheep;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlowParticle;
@@ -69,6 +70,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.HeavyBoome
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.HighGrass;
+import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
@@ -85,6 +87,7 @@ import com.watabou.noosa.Group;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.GameMath;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
@@ -143,6 +146,8 @@ public abstract class Level implements Bundlable {
 	public int entrance;
 	public int exit;
 
+	public ArrayList<LevelTransition> transitions;
+
 	//when a boss level has become locked.
 	public boolean locked = false;
 	
@@ -167,8 +172,7 @@ public abstract class Level implements Bundlable {
 	private static final String MAP			= "map";
 	private static final String VISITED		= "visited";
 	private static final String MAPPED		= "mapped";
-	private static final String ENTRANCE	= "entrance";
-	private static final String EXIT		= "exit";
+	private static final String TRANSITIONS	= "transitions";
 	private static final String LOCKED      = "locked";
 	private static final String HEAPS		= "heaps";
 	private static final String PLANTS		= "plants";
@@ -235,6 +239,10 @@ public abstract class Level implements Bundlable {
 					case 4:
 						feeling = Feeling.LARGE;
 						addItemToSpawn(Generator.random(Generator.Category.FOOD));
+						//add a second torch to help with the larger floor
+						if (Dungeon.isChallenged(Challenges.DARKNESS)){
+							addItemToSpawn( new Torch() );
+						}
 						break;
 					case 5:
 						feeling = Feeling.TRAPS;
@@ -248,6 +256,8 @@ public abstract class Level implements Bundlable {
 		
 		do {
 			width = height = length = 0;
+
+			transitions = new ArrayList<>();
 
 			mobs = new HashSet<>();
 			heaps = new SparseArray<>();
@@ -315,8 +325,8 @@ public abstract class Level implements Bundlable {
 
 		version = bundle.getInt( VERSION );
 		
-		//saves from before v0.9.2b are not supported
-		if (version < ShatteredPixelDungeon.v0_9_2b){
+		//saves from before v1.0.3 are not supported
+		if (version < ShatteredPixelDungeon.v1_0_3){
 			throw new RuntimeException("old save");
 		}
 
@@ -334,9 +344,24 @@ public abstract class Level implements Bundlable {
 
 		visited	= bundle.getBooleanArray( VISITED );
 		mapped	= bundle.getBooleanArray( MAPPED );
-		
-		entrance	= bundle.getInt( ENTRANCE );
-		exit		= bundle.getInt( EXIT );
+
+		transitions = new ArrayList<>();
+		if (bundle.contains(TRANSITIONS)){
+			for (Bundlable b : bundle.getCollection( TRANSITIONS )){
+				transitions.add((LevelTransition) b);
+			}
+		//pre-1.3.0 saves, converts old entrance/exit to new transitions
+		} else {
+			if (bundle.contains("entrance")){
+				transitions.add(new LevelTransition(
+						this,
+						bundle.getInt("entrance"),
+						Dungeon.depth == 1 ? LevelTransition.Type.SURFACE : LevelTransition.Type.REGULAR_ENTRANCE));
+			}
+			if (bundle.contains("exit")){
+				transitions.add(new LevelTransition(this, bundle.getInt("exit"), LevelTransition.Type.REGULAR_EXIT));
+			}
+		}
 
 		locked      = bundle.getBoolean( LOCKED );
 		
@@ -412,8 +437,7 @@ public abstract class Level implements Bundlable {
 		bundle.put( MAP, map );
 		bundle.put( VISITED, visited );
 		bundle.put( MAPPED, mapped );
-		bundle.put( ENTRANCE, entrance );
-		bundle.put( EXIT, exit );
+		bundle.put( TRANSITIONS, transitions );
 		bundle.put( LOCKED, locked );
 		bundle.put( HEAPS, heaps.valueList() );
 		bundle.put( PLANTS, plants.valueList() );
@@ -461,15 +485,51 @@ public abstract class Level implements Bundlable {
 		}
 
 		Mob m = Reflection.newInstance(mobsToSpawn.remove(0));
-		if (Dungeon.isChallenged(Challenges.CHAMPION_ENEMIES)){
-			ChampionEnemy.rollForChampion(m);
-		}
+		ChampionEnemy.rollForChampion(m);
 		return m;
 	}
 
 	abstract protected void createMobs();
 
 	abstract protected void createItems();
+
+	public int entrance(){
+		LevelTransition l = getTransition(null);
+		if (l != null){
+			return l.cell();
+		}
+		return 0;
+	}
+
+	public int exit(){
+		LevelTransition l = getTransition(LevelTransition.Type.REGULAR_EXIT);
+		if (l != null){
+			return l.cell();
+		}
+		return 0;
+	}
+
+	public LevelTransition getTransition(LevelTransition.Type type){
+		for (LevelTransition transition : transitions){
+			//if we don't specify a type, prefer to return any entrance
+			if (type == null &&
+					(transition.type == LevelTransition.Type.REGULAR_ENTRANCE || transition.type == LevelTransition.Type.SURFACE)){
+				return transition;
+			} else if (transition.type == type){
+				return transition;
+			}
+		}
+		return (type == null && !transitions.isEmpty() ? transitions.get(0) : null);
+	}
+
+	public LevelTransition getTransition(int cell){
+		for (LevelTransition transition : transitions){
+			if (transition.inside(cell)){
+				return transition;
+			}
+		}
+		return null;
+	}
 
 	public void seal(){
 		if (!locked) {
@@ -526,13 +586,13 @@ public abstract class Level implements Bundlable {
 	}
 
 	public int mobCount(){
-		int count = 0;
+		float count = 0;
 		for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])){
 			if (mob.alignment == Char.Alignment.ENEMY && !mob.properties().contains(Char.Property.MINIBOSS)) {
 				count += mob.spawningWeight();
 			}
 		}
-		return count;
+		return Math.round(count);
 	}
 
 	public Mob findMob( int pos ){
@@ -552,6 +612,9 @@ public abstract class Level implements Bundlable {
 			Actor.addDelayed(respawner, respawnCooldown());
 		} else {
 			Actor.add(respawner);
+			if (respawner.cooldown() > respawnCooldown()){
+				respawner.resetCooldown();
+			}
 		}
 		return respawner;
 	}
@@ -579,11 +642,22 @@ public abstract class Level implements Bundlable {
 
 			return true;
 		}
+
+		protected void resetCooldown(){
+			spend(-cooldown());
+			spend(Dungeon.level.respawnCooldown());
+		}
 	}
 
 	public float respawnCooldown(){
 		if (Statistics.amuletObtained){
-			return TIME_TO_RESPAWN/2f;
+			if (Dungeon.depth == 1){
+				//very fast spawns on floor 1! 0/2/4/6/8/10/12, etc.
+				return (Dungeon.level.mobCount()) * (TIME_TO_RESPAWN / 25f);
+			} else {
+				//respawn time is 5/5/10/15/20/25/25, etc.
+				return Math.round(GameMath.gate( TIME_TO_RESPAWN/10f, Dungeon.level.mobCount() * (TIME_TO_RESPAWN / 10f), TIME_TO_RESPAWN / 2f));
+			}
 		} else if (Dungeon.level.feeling == Feeling.DARK){
 			return 2*TIME_TO_RESPAWN/3f;
 		} else {
@@ -592,16 +666,18 @@ public abstract class Level implements Bundlable {
 	}
 
 	public boolean spawnMob(int disLimit){
-		PathFinder.buildDistanceMap(Dungeon.hero.pos, BArray.or(Dungeon.level.passable, Dungeon.level.avoid, null));
+		PathFinder.buildDistanceMap(Dungeon.hero.pos, BArray.or(passable, avoid, null));
 
-		Mob mob = Dungeon.level.createMob();
+		Mob mob = createMob();
 		mob.state = mob.WANDERING;
-		mob.pos = Dungeon.level.randomRespawnCell( mob );
+		int tries = 30;
+		do {
+			mob.pos = randomRespawnCell(mob);
+			tries--;
+		} while ((mob.pos == -1 || PathFinder.distance[mob.pos] < disLimit) && tries > 0);
+
 		if (Dungeon.hero.isAlive() && mob.pos != -1 && PathFinder.distance[mob.pos] >= disLimit) {
 			GameScene.add( mob );
-			if (Statistics.amuletObtained) {
-				mob.beckon( Dungeon.hero.pos );
-			}
 			if (!mob.buffs(ChampionEnemy.class).isEmpty()){
 				GLog.w(Messages.get(ChampionEnemy.class, "warn"));
 			}
@@ -613,8 +689,15 @@ public abstract class Level implements Bundlable {
 	
 	public int randomRespawnCell( Char ch ) {
 		int cell;
+		int count = 0;
 		do {
+
+			if (++count > 30) {
+				return -1;
+			}
+
 			cell = Random.Int( length() );
+
 		} while ((Dungeon.level == this && heroFOV[cell])
 				|| !passable[cell]
 				|| (Char.hasProp(ch, Char.Property.LARGE) && !openSpace[cell])
@@ -936,6 +1019,7 @@ public abstract class Level implements Bundlable {
 		int result;
 		do {
 			result = randomRespawnCell( null );
+			if (result == -1) return -1;
 		} while (traps.get(result) != null
 				|| findMob(result) != null);
 		return result;
@@ -981,6 +1065,10 @@ public abstract class Level implements Bundlable {
 				Door.enter( ch.pos );
 			}
 		}
+
+		if (ch.isAlive() && ch instanceof Piranha && !water[ch.pos]){
+			ch.die(null);
+		}
 	}
 	
 	//public method for forcing the hard press of a cell. e.g. when an item lands on it
@@ -1021,36 +1109,27 @@ public abstract class Level implements Bundlable {
 			break;
 		}
 
+		TimekeepersHourglass.timeFreeze timeFreeze =
+				Dungeon.hero.buff(TimekeepersHourglass.timeFreeze.class);
+
+		Swiftthistle.TimeBubble bubble =
+				Dungeon.hero.buff(Swiftthistle.TimeBubble.class);
+
 		if (trap != null) {
-			
-			TimekeepersHourglass.timeFreeze timeFreeze =
-					Dungeon.hero.buff(TimekeepersHourglass.timeFreeze.class);
-			
-			Swiftthistle.TimeBubble bubble =
-					Dungeon.hero.buff(Swiftthistle.TimeBubble.class);
-			
 			if (bubble != null){
-				
 				Sample.INSTANCE.play(Assets.Sounds.TRAP);
-				
 				discover(cell);
-				
 				bubble.setDelayedPress(cell);
 				
 			} else if (timeFreeze != null){
-				
 				Sample.INSTANCE.play(Assets.Sounds.TRAP);
-				
 				discover(cell);
-				
 				timeFreeze.setDelayedPress(cell);
 				
 			} else {
-
 				if (Dungeon.hero.pos == cell) {
 					Dungeon.hero.interrupt();
 				}
-
 				trap.trigger();
 
 			}
@@ -1058,7 +1137,18 @@ public abstract class Level implements Bundlable {
 		
 		Plant plant = plants.get( cell );
 		if (plant != null) {
-			plant.trigger();
+			if (bubble != null){
+				Sample.INSTANCE.play(Assets.Sounds.TRAMPLE, 1, Random.Float( 0.96f, 1.05f ) );
+				bubble.setDelayedPress(cell);
+
+			} else if (timeFreeze != null){
+				Sample.INSTANCE.play(Assets.Sounds.TRAMPLE, 1, Random.Float( 0.96f, 1.05f ) );
+				timeFreeze.setDelayedPress(cell);
+
+			} else {
+				plant.trigger();
+
+			}
 		}
 
 		if (hard && Blob.volumeAt(cell, Web.class) > 0){
@@ -1249,6 +1339,10 @@ public abstract class Level implements Bundlable {
 					heap.seen = true;
 		}
 
+	}
+
+	public boolean isLevelExplored( int depth ){
+		return false;
 	}
 	
 	public int distance( int a, int b ) {

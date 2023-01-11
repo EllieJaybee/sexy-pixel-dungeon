@@ -22,9 +22,12 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DwarfKing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
@@ -87,6 +90,7 @@ public class WandOfLightning extends DamageWand {
 		}
 
 		if (!curUser.isAlive()) {
+			Badges.validateDeathFromFriendlyMagic();
 			Dungeon.fail( getClass() );
 			GLog.n(Messages.get(this, "ondeath"));
 		}
@@ -95,7 +99,14 @@ public class WandOfLightning extends DamageWand {
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
 		//acts like shocking enchantment
-		new Shocking().proc(staff, attacker, defender, damage);
+		new LightningOnHit().proc(staff, attacker, defender, damage);
+	}
+
+	private static class LightningOnHit extends Shocking {
+		@Override
+		protected float procChanceMultiplier(Char attacker) {
+			return Wand.procChanceMultiplier(attacker);
+		}
 	}
 
 	private void arc( Char ch ) {
@@ -133,6 +144,10 @@ public class WandOfLightning extends DamageWand {
 
 		Char ch = Actor.findChar( cell );
 		if (ch != null) {
+			if (ch instanceof DwarfKing){
+				Statistics.qualifiedForBossChallengeBadge = false;
+			}
+
 			affected.add( ch );
 			arcs.add( new Lightning.Arc(curUser.sprite.center(), ch.sprite.center()));
 			arc(ch);

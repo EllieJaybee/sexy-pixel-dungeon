@@ -52,6 +52,10 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class Combo extends Buff implements ActionIndicator.Action {
+
+	{
+		type = buffType.POSITIVE;
+	}
 	
 	private int count = 0;
 	private float comboTime = 0f;
@@ -80,11 +84,6 @@ public class Combo extends Buff implements ActionIndicator.Action {
 	@Override
 	public String iconTextDisplay() {
 		return Integer.toString((int)comboTime);
-	}
-
-	@Override
-	public String toString() {
-		return Messages.get(this, "name");
 	}
 	
 	public void hit( Char enemy ) {
@@ -325,7 +324,7 @@ public class Combo extends Buff implements ActionIndicator.Action {
 			//special on-hit effects
 			switch (moveBeingUsed) {
 				case CLOBBER:
-					hit(enemy);
+					if (!wasAlly) hit(enemy);
 					//trace a ballistica to our target (which will also extend past them
 					Ballistica trajectory = new Ballistica(target.pos, enemy.pos, Ballistica.STOP_TARGET);
 					//trim it to just be the part that goes past them
@@ -341,7 +340,7 @@ public class Combo extends Buff implements ActionIndicator.Action {
 							dist--;
 						}
 					}
-					WandOfBlastWave.throwChar(enemy, trajectory, dist, true, false);
+					WandOfBlastWave.throwChar(enemy, trajectory, dist, true, false, hero.getClass());
 					break;
 				case PARRY:
 					hit(enemy);

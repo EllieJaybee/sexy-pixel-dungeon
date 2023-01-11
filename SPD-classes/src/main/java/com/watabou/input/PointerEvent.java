@@ -21,12 +21,16 @@
 
 package com.watabou.input;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.watabou.noosa.Game;
+import com.watabou.noosa.ui.Cursor;
+import com.watabou.utils.GameMath;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Signal;
 
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.HashMap;
 
 public class PointerEvent {
@@ -57,6 +61,10 @@ public class PointerEvent {
 	}
 
 	public PointerEvent( int x, int y, int id, Type type, int button){
+		if (Cursor.isCursorCaptured()){
+			x = Game.width/2;
+			y = Game.width/2;
+		}
 		start = current = new PointF(x, y);
 		this.id = id;
 		this.type = type;
@@ -113,14 +121,6 @@ public class PointerEvent {
 		}
 		return lastHoverPos.clone();
 	}
-
-	public static synchronized void emulateMouseButton( int button, boolean down ){
-		if (down){
-			addPointerEvent(new PointerEvent((int)lastHoverPos.x, (int)lastHoverPos.y, 1000+button, Type.DOWN, button));
-		} else {
-			addPointerEvent(new PointerEvent((int)lastHoverPos.x, (int)lastHoverPos.y, 1000+button, Type.UP, button));
-		}
-	}
 	
 	public static synchronized void addPointerEvent( PointerEvent event ){
 		pointerEvents.add( event );
@@ -131,6 +131,8 @@ public class PointerEvent {
 			pointerEvents.add(event);
 		}
 	}
+
+	public static boolean clearKeyboardThisPress = true;
 	
 	public static synchronized void processPointerEvents(){
 		//handle any hover events separately first as we may need to add drag events
@@ -145,10 +147,9 @@ public class PointerEvent {
 
 		//add drag events for any emulated presses
 		if (hovered){
-			for (int i = 1000+LEFT; i <= 1000+FORWARD; i++){
+			for (int i = 10+LEFT; i <= 10+FORWARD; i++){
 				if (activePointers.containsKey(i)){
-					//add to front in case pointer is also being released this frame
-					pointerEvents.add(0, new PointerEvent((int)lastHoverPos.x, (int)lastHoverPos.y, i, Type.DOWN, i));
+					Game.inputHandler.emulateDrag(i-10);
 				}
 			}
 		}
@@ -157,6 +158,7 @@ public class PointerEvent {
 			if (p.type == Type.HOVER){
 				continue;
 			}
+			clearKeyboardThisPress = true;
 			if (activePointers.containsKey(p.id)){
 				PointerEvent existing = activePointers.get(p.id);
 				existing.current = p.current;
@@ -173,6 +175,10 @@ public class PointerEvent {
 					activePointers.put(p.id, p);
 				}
 				pointerSignal.dispatch(p);
+			}
+			if (clearKeyboardThisPress){
+				//most press events should clear the keyboard
+				Game.platform.setOnscreenKeyboardVisible(false);
 			}
 		}
 		pointerEvents.clear();

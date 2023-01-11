@@ -33,8 +33,9 @@
 		android:fullBackupOnly="true"
 		android:backupAgent=".AndroidBackupHandler">
 		<activity
-			android:label="${appName}"
 			android:name=".AndroidLauncher"
+			android:screenOrientation="nosensor"
+			android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize"
 			android:exported="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -42,10 +43,7 @@
 			</intent-filter>
 		</activity>
 		<activity
-			android:label="${appName}"
-			android:name=".AndroidGame"
-			android:screenOrientation="nosensor"
-			android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize">
+			android:name=".AndroidMissingNativesHandler">
 		</activity>
 
 	</application>

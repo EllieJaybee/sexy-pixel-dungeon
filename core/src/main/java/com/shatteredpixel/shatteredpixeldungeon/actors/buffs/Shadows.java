@@ -38,6 +38,7 @@ public class Shadows extends Invisibility {
 
 	{
 		announced = false;
+		type = buffType.POSITIVE;
 	}
 
 	@Override
@@ -118,11 +119,6 @@ public class Shadows extends Invisibility {
 	@Override
 	public float iconFadePercent() {
 		return 0;
-	}
-	
-	@Override
-	public String toString() {
-		return Messages.get(this, "name");
 	}
 
 	@Override

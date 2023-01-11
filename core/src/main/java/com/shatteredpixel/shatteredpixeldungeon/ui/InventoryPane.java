@@ -263,6 +263,27 @@ public class InventoryPane extends Component {
 
 		super.layout();
 	}
+	
+	public void alpha( float value ){
+		bg.alpha( value );
+		bg2.alpha( value );
+		
+		for (InventorySlot slot : equipped){
+			slot.alpha( value );
+		}
+		for (InventorySlot slot : bagItems){
+			slot.alpha( value );
+		}
+		
+		gold.alpha(value);
+		goldTxt.alpha(value);
+		energy.alpha(value);
+		energyTxt.alpha(value);
+
+		for (BagButton bag : bags){
+			bag.alpha( value );
+		}
+	}
 
 	public static void refresh(){
 		if (instance != null) instance.updateInventory();
@@ -507,6 +528,10 @@ public class InventoryPane extends Component {
 				return;
 			}
 
+			if (!Dungeon.hero.isAlive() || !Dungeon.hero.ready){
+				return;
+			}
+
 			if (targeting){
 				if (targetingSlot == this){
 					onClick();
@@ -529,6 +554,10 @@ public class InventoryPane extends Component {
 		protected void onRightClick() {
 			if (lastBag != item && !lastBag.contains(item) && !item.isEquipped(Dungeon.hero)){
 				updateInventory();
+				return;
+			}
+
+			if (!Dungeon.hero.isAlive() || !Dungeon.hero.ready){
 				return;
 			}
 
@@ -606,6 +635,12 @@ public class InventoryPane extends Component {
 			bgBottom.y = y+1;
 			bgBottom.x = x;
 		}
+		
+		public void alpha( float value ){
+			bgTop.alpha(value);
+			bgBottom.alpha(value);
+			icon.alpha(value);
+		}
 
 		@Override
 		protected void onClick() {
@@ -628,6 +663,11 @@ public class InventoryPane extends Component {
 				case 5:
 					return SPDAction.BAG_5;
 			}
+		}
+
+		@Override
+		public GameAction secondaryTooltipAction() {
+			return SPDAction.INVENTORY_SELECTOR;
 		}
 
 		@Override

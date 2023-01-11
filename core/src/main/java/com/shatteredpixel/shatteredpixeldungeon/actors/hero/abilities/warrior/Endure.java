@@ -38,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
+import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 
@@ -66,6 +67,10 @@ public class Endure extends ArmorAbility {
 
 	public static class EndureTracker extends FlavourBuff {
 
+		{
+			type = buffType.POSITIVE;
+		}
+
 		public boolean enduring;
 
 		public int damageBonus;
@@ -74,17 +79,17 @@ public class Endure extends ArmorAbility {
 
 		@Override
 		public int icon() {
-			return enduring ? BuffIndicator.NONE : BuffIndicator.AMOK;
+			return enduring ? BuffIndicator.NONE : BuffIndicator.ARMOR;
+		}
+
+		@Override
+		public void tintIcon(Image icon) {
+			super.tintIcon(icon);
 		}
 
 		@Override
 		public float iconFadePercent() {
 			return Math.max(0, (10f - visualcooldown()) / 10f);
-		}
-
-		@Override
-		public String toString() {
-			return Messages.get(this, "name");
 		}
 
 		@Override
@@ -99,10 +104,10 @@ public class Endure extends ArmorAbility {
 			hitsLeft = 0;
 		}
 
-		public int adjustDamageTaken(int damage){
+		public float adjustDamageTaken(float damage){
 			if (enduring) {
-				damageBonus += damage/3;
-				return damage/2;
+				damageBonus += damage/2;
+				return damage/2f;
 			}
 			return damage;
 		}
@@ -139,12 +144,13 @@ public class Endure extends ArmorAbility {
 			if (damageBonus > 0) {
 				target.sprite.centerEmitter().start( Speck.factory( Speck.SCREAM ), 0.3f, 3 );
 				Sample.INSTANCE.play(Assets.Sounds.CHALLENGE);
+				SpellSprite.show(target, SpellSprite.BERSERK);
 			} else {
 				detach();
 			}
 		}
 
-		public int damageFactor(int damage){
+		public float damageFactor(float damage){
 			if (enduring){
 				return damage;
 			} else {

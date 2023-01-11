@@ -160,24 +160,55 @@ public class PixelScene extends Scene {
 
 	}
 
-	private static PointF virtualCursorPos;
-
 	@Override
 	public void update() {
 		super.update();
 		//20% deadzone
-		if (Math.abs(ControllerHandler.rightStickPosition.x) >= 0.2f
-				|| Math.abs(ControllerHandler.rightStickPosition.y) >= 0.2f) {
-			if (!ControllerHandler.controllerPointerActive()) {
-				ControllerHandler.setControllerPointer(true);
-				virtualCursorPos = PointerEvent.currentHoverPos();
+		if (!Cursor.isCursorCaptured()) {
+			if (Math.abs(ControllerHandler.rightStickPosition.x) >= 0.2f
+					|| Math.abs(ControllerHandler.rightStickPosition.y) >= 0.2f) {
+				if (!ControllerHandler.controllerPointerActive()) {
+					ControllerHandler.setControllerPointer(true);
+				}
+
+				int sensitivity = SPDSettings.controllerPointerSensitivity() * 100;
+
+				//cursor moves 100xsens scaled pixels per second at full speed
+				//35x at 50% movement, ~9x at 20% deadzone threshold
+				float xMove = (float) Math.pow(Math.abs(ControllerHandler.rightStickPosition.x), 1.5);
+				if (ControllerHandler.rightStickPosition.x < 0) xMove = -xMove;
+
+				float yMove = (float) Math.pow(Math.abs(ControllerHandler.rightStickPosition.y), 1.5);
+				if (ControllerHandler.rightStickPosition.y < 0) yMove = -yMove;
+
+				PointF virtualCursorPos = ControllerHandler.getControllerPointerPos();
+				virtualCursorPos.x += defaultZoom * sensitivity * Game.elapsed * xMove;
+				virtualCursorPos.y += defaultZoom * sensitivity * Game.elapsed * yMove;
+
+				PointF cameraShift = new PointF();
+
+				if (virtualCursorPos.x < 0){
+					cameraShift.x = virtualCursorPos.x;
+					virtualCursorPos.x = 0;
+				} else if (virtualCursorPos.x > Camera.main.screenWidth()){
+					cameraShift.x = (virtualCursorPos.x - Camera.main.screenWidth());
+					virtualCursorPos.x = Camera.main.screenWidth();
+				}
+
+				if (virtualCursorPos.y < 0){
+					cameraShift.y = virtualCursorPos.y;
+					virtualCursorPos.y = 0;
+				} else if (virtualCursorPos.y > Camera.main.screenHeight()){
+					cameraShift.y = (virtualCursorPos.y - Camera.main.screenHeight());
+					virtualCursorPos.y = Camera.main.screenHeight();
+				}
+
+				cameraShift.invScale(Camera.main.zoom);
+				if (cameraShift.length() > 0 && Camera.main.scrollable){
+					Camera.main.shift(cameraShift);
+				}
+				ControllerHandler.updateControllerPointer(virtualCursorPos, true);
 			}
-			//cursor moves 500 scaled pixels per second at full speed, 100 at minimum speed
-			virtualCursorPos.x += defaultZoom * 500 * Game.elapsed * ControllerHandler.rightStickPosition.x;
-			virtualCursorPos.y += defaultZoom * 500 * Game.elapsed * ControllerHandler.rightStickPosition.y;
-			virtualCursorPos.x = GameMath.gate(0, virtualCursorPos.x, Game.width);
-			virtualCursorPos.y = GameMath.gate(0, virtualCursorPos.y, Game.height);
-			PointerEvent.addPointerEvent(new PointerEvent((int) virtualCursorPos.x, (int) virtualCursorPos.y, 10_000, PointerEvent.Type.HOVER, PointerEvent.NONE));
 		}
 	}
 
@@ -193,6 +224,7 @@ public class PixelScene extends Scene {
 				cursor = new Image(Cursor.Type.CONTROLLER.file);
 			}
 
+			PointF virtualCursorPos = ControllerHandler.getControllerPointerPos();
 			cursor.x = (virtualCursorPos.x / defaultZoom) - cursor.width()/2f;
 			cursor.y = (virtualCursorPos.y / defaultZoom) - cursor.height()/2f;
 			cursor.camera = uiCamera;
@@ -293,13 +325,23 @@ public class PixelScene extends Scene {
 		Game.runOnRenderThread(new Callback() {
 			@Override
 			public void call() {
-				BadgeBanner banner = BadgeBanner.show( badge.image );
-				banner.camera = uiCamera;
-				float offset = Camera.main.centerOffset.y;
-				banner.x = align( banner.camera, (banner.camera.width - banner.width) / 2 );
-				banner.y = align( uiCamera, (uiCamera.height - banner.height) / 2 - banner.height/2 - 16 - offset );
 				Scene s = Game.scene();
-				if (s != null) s.add( banner );
+				if (s != null) {
+					BadgeBanner banner = BadgeBanner.show(badge.image);
+					s.add(banner);
+					float offset = Camera.main.centerOffset.y;
+
+					int left = uiCamera.width/2 - BadgeBanner.SIZE/2;
+					left -= (BadgeBanner.SIZE * BadgeBanner.DEFAULT_SCALE * (BadgeBanner.showing.size()-1))/2;
+					for (int i = 0; i < BadgeBanner.showing.size(); i++){
+						banner = BadgeBanner.showing.get(i);
+						banner.camera = uiCamera;
+						banner.x = align(banner.camera, left);
+						banner.y = align(uiCamera, (uiCamera.height - banner.height) / 2 - banner.height / 2 - 16 - offset);
+						left += BadgeBanner.SIZE * BadgeBanner.DEFAULT_SCALE;
+					}
+
+				}
 			}
 		});
 	}

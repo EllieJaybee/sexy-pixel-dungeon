@@ -114,14 +114,14 @@ public class Honeypot extends Item {
 		
 		if (newPos != -1) {
 			Bee bee = new Bee();
-			bee.spawn( Dungeon.depth );
+			bee.spawn( Dungeon.scalingDepth() );
 			bee.setPotInfo( pos, owner );
 			bee.HP = bee.HT;
 			bee.pos = newPos;
 			
 			GameScene.add( bee );
-			Actor.addDelayed( new Pushing( bee, pos, newPos ), -1f );
-			
+			if (newPos != pos) Actor.addDelayed( new Pushing( bee, pos, newPos ), -1f );
+
 			bee.sprite.alpha( 0 );
 			bee.sprite.parent.add( new AlphaTweener( bee.sprite, 1, 0.15f ) );
 			
@@ -186,6 +186,12 @@ public class Honeypot extends Item {
 		public void dropPot( Char holder, int dropPos ){
 			for (Bee bee : findBees(holder)){
 				updateBee(bee, dropPos, null);
+			}
+		}
+
+		public void movePot( int oldpos, int movePos){
+			for (Bee bee : findBees(oldpos)){
+				updateBee(bee, movePos, null);
 			}
 		}
 

@@ -41,6 +41,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.EarthGuardianSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
+import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
@@ -195,7 +196,7 @@ public class WandOfLivingEarth extends DamageWand {
 			}
 		}
 		
-		int armor = Math.round(damage*0.33f);
+		int armor = Math.round(damage*0.33f*procChanceMultiplier(attacker));
 
 		if (guardian != null){
 			guardian.sprite.centerEmitter().burst(MagicMissile.EarthParticle.ATTRACT, 8 + buffedLvl() / 2);
@@ -223,6 +224,10 @@ public class WandOfLivingEarth extends DamageWand {
 	}
 
 	public static class RockArmor extends Buff {
+
+		{
+			type = buffType.POSITIVE;
+		}
 
 		private int wandLevel;
 		private int armor;
@@ -254,6 +259,11 @@ public class WandOfLivingEarth extends DamageWand {
 		}
 
 		@Override
+		public void tintIcon(Image icon) {
+			icon.brightness(0.6f);
+		}
+
+		@Override
 		public float iconFadePercent() {
 			return Math.max(0, (armorToGuardian() - armor) / (float)armorToGuardian());
 		}
@@ -261,11 +271,6 @@ public class WandOfLivingEarth extends DamageWand {
 		@Override
 		public String iconTextDisplay() {
 			return Integer.toString(armor);
-		}
-
-		@Override
-		public String toString() {
-			return Messages.get(this, "name");
 		}
 
 		@Override
@@ -299,6 +304,9 @@ public class WandOfLivingEarth extends DamageWand {
 			alignment = Alignment.ALLY;
 			state = HUNTING;
 			intelligentAlly = true;
+
+			properties.add(Property.INORGANIC);
+
 			WANDERING = new Wandering();
 
 			//before other mobs
@@ -333,7 +341,7 @@ public class WandOfLivingEarth extends DamageWand {
 
 		@Override
 		public int damageRoll() {
-			return Random.NormalIntRange(2, 4 + Dungeon.depth/2);
+			return Random.NormalIntRange(2, 4 + Dungeon.scalingDepth()/2);
 		}
 
 		@Override
