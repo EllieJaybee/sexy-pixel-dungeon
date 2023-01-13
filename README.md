@@ -1,3 +1,9 @@
+# Sexy Pixel Dungeon
+
+A fork of [Shattered Pixel Dungeon](https://github.com/00-Evan/shattered-pixel-dungeon) aiming to add nsfw elements to the game.
+
+_Below is the original README of SPD_
+
 # Shattered Pixel Dungeon
 
 A Roguelike RPG, with randomly generated levels, items, enemies, and traps! Based on the [source code of Pixel Dungeon](https://github.com/00-Evan/pixel-dungeon-gradle), by [Watabou](https://www.watabou.ru).
